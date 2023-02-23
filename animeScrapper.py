@@ -16,11 +16,14 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.firefox.options import Options
 from time import sleep
+
+from webdriver_manager.chrome import ChromeDriverManager
 
 # %%
 def getImages(title, soup):
-    path = f'manga/{title}/temp'
+    path = f'/Users/mohamedalaradi/Desktop/projects/animeScarpper/manga/{title}/temp'
     Path(path).mkdir(parents=True, exist_ok=True)
     imgCounter = 0
 
@@ -42,24 +45,29 @@ def totalImages(html):
 
 # %%
 def genPDF(imagesPath):
+    image_extensions = ('.jpg', '.jpeg', '.png')
     imagesName = os.listdir(imagesPath)
+    imagesName = [file for file in imagesName if file.endswith(image_extensions)]
+
     imagesName.sort(key=lambda f: int(re.sub('\D', '', f)))
     images = [Image.open(f'{imagesPath}/' + f)for f in imagesName]
     images = [image.convert('RGB') for image in images]
-    pdfPath = imagesPath.split('/')[0] + '/' + imagesPath.split('/')[1] + '/' + imagesPath.split('/')[1] + '.pdf'
+    pdfPath = '/'.join(imagesPath.split('/')[0:-1]) + '/' + imagesPath.split('/')[-2] + '.pdf'
     images[0].save(pdfPath, "PDF" ,resolution=100.0, save_all=True, append_images=images[1:])
     return pdfPath
 
 # %%
-def initiateScrapping(url, secondServer = False):
-
-    driver = webdriver.Firefox()
+def initiateScrapping(url, secondServer = True, headless=False):
+    options = Options()
+    if headless:
+        options.add_argument('--headless')
+    driver = webdriver.Firefox(options=options, service_log_path='/Users/mohamedalaradi/Desktop/projects/animeScarpper/geckodriver.log')
     delay = 10
     delayTokens = 5
 
     driver.get(url)
     driver.maximize_window()
-    
+
     if secondServer:
         for token in range(delayTokens):
             try:
